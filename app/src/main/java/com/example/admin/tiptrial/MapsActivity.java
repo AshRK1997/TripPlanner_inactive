@@ -17,12 +17,13 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
+/*
 import com.akexorcist.googledirection.DirectionCallback;
 import com.akexorcist.googledirection.GoogleDirection;
 import com.akexorcist.googledirection.constant.AvoidType;
 import com.akexorcist.googledirection.constant.TransportMode;
 import com.akexorcist.googledirection.model.Direction;
+*/
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -183,6 +184,7 @@ public void continousrch(){
     }, 5000);
 }
 public void getDirection(final LatLng a, final LatLng b){
+    /*
     Toast.makeText(MapsActivity.this, "inside direction", Toast.LENGTH_SHORT).show();
     GoogleDirection.withServerKey("AIzaSyAGRYhhtVz3LmzcmfB2KAKlPeWhANcT6LA")
             .from(a)
@@ -206,5 +208,5 @@ public void getDirection(final LatLng a, final LatLng b){
             });
 
 }
-
-}
+*/
+}}
