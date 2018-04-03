@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void launchHomeScreen() {
 
-        startActivity(new Intent(MainActivity.this, MapsActivity.class));
+        startActivity(new Intent(MainActivity.this, Main3Activity.class));
         finish();
     }
     private void launchNextScreen() {
