@@ -1,19 +1,31 @@
 package com.example.admin.tiptrial;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
-
+import com.directions.route.AbstractRouting;
+import com.directions.route.Route;
+import com.directions.route.RouteException;
 import com.directions.route.Routing;
 import com.directions.route.RoutingListener;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -25,24 +37,38 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Main4Activity extends FragmentActivity implements OnMapReadyCallback {
-    /*** places api = AIzaSyBrfbhEkLUgWlnXAmSHlBoIW5QZIyv3AiI***/
+public class Main4Activity extends FragmentActivity implements OnMapReadyCallback,GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        LocationListener,
+        GoogleMap.OnMarkerClickListener,
+        GoogleMap.OnMarkerDragListener,RoutingListener {
+    /*** direct api = AIzaSyBBnJigWiu0TUp0IREUsnVoDw3HlliShzE***/
     // Google Map
     int q=0;
+    private ProgressDialog progressDialog;
     private GoogleMap googleMap;
     private GPSTracker gpsTracker;
     private Location mLocation;
     double latitude, longitude;
     double latitude2, longitude2;
+    LocationRequest mLocationRequest;
+    int PROXIMITY_RADIUS = 10000;
+    GoogleApiClient mGoogleApiClient;
     Marker to,from;
     LatLng my_loc,latLng1;
     private boolean firstRefresh = true;
     private GoogleMap mMap;
+    boolean turned = true;
+    private List<Polyline> polylines;
+    private static final int[] COLORS = new int[]{R.color.orange,R.color.colorPrimary,R.color.colorAccent,R.color.colorPrimaryDark,R.color.primary_dark_material_light};
+
    /* AutoCompleteTextView atvPlaces;
     PlacesTask placesTask;
     ParserTask parserTask;*/
@@ -54,10 +80,13 @@ public class Main4Activity extends FragmentActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main4);
 
         q++;
-        if(q==1){
+        if(q==1){if (!CheckGooglePlayServices()) {
+            Log.d("onCreate", "Finishing test case since Google Play Services are not available");
+            finish();
+
 
         }
-
+            polylines = new ArrayList<>();
         try {
             // Loading map
             initilizeMap();
@@ -66,7 +95,7 @@ public class Main4Activity extends FragmentActivity implements OnMapReadyCallbac
             e.printStackTrace();
         }
 
-    }
+    }}
 
     /**
      * function to load map. If map is not created it will create it for you
@@ -100,6 +129,17 @@ public class Main4Activity extends FragmentActivity implements OnMapReadyCallbac
             longitude = mLocation.getLongitude();
         }
     }
+    /*private String getUrl(double latitude, double longitude, String nearbyPlace)
+    {
+        StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+        googlePlacesUrl.append("location=" + latitude + "," + longitude);
+        googlePlacesUrl.append("&radius=" + PROXIMITY_RADIUS);
+        googlePlacesUrl.append("&type=" + nearbyPlace);
+        googlePlacesUrl.append("&sensor=true");
+        googlePlacesUrl.append("&key=" + "AIzaSyBrfbhEkLUgWlnXAmSHlBoIW5QZIyv3AiI");
+        Log.d("getUrl", googlePlacesUrl.toString());
+        return (googlePlacesUrl.toString());
+    }*/
 
     @Override
     protected void onResume() {
@@ -109,14 +149,27 @@ public class Main4Activity extends FragmentActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        if(q==1){
-            mMap.clear();
+        if(turned){
+            turned=false;
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+                buildGoogleApiClient();
+
+            }
+        } else {
+            buildGoogleApiClient();
+
+        }
+
             googleMap.getUiSettings().setZoomControlsEnabled(true);
             googleMap.getUiSettings().setCompassEnabled(true);
             googleMap.getUiSettings().setMyLocationButtonEnabled(true);
             googleMap.getUiSettings().setRotateGesturesEnabled(true);
             googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+
             mMap = googleMap;
+            mMap.clear();
             my_loc = new LatLng(latitude, longitude);
             from = mMap.addMarker(new MarkerOptions().position(my_loc).title("I'm here...").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(my_loc, 13));
@@ -165,8 +218,17 @@ public class Main4Activity extends FragmentActivity implements OnMapReadyCallbac
 
 
 
-        }}
-    /*** places api = AIzaSyBrfbhEkLUgWlnXAmSHlBoIW5QZIyv3AiI***/
+        }
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+        mGoogleApiClient.connect();
+    }
+
+    /*** direct api = AIzaSyBBnJigWiu0TUp0IREUsnVoDw3HlliShzE***/
     public void onMapSearch(View view) {
         if(q==1) {
             search();
@@ -214,9 +276,8 @@ public class Main4Activity extends FragmentActivity implements OnMapReadyCallbac
             CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
             mMap.animateCamera(CameraUpdateFactory.zoomOut());
             mMap.animateCamera(cu);
-            markerPoints.add(my_loc);
-            markerPoints.add(latLng1);
-
+            route();
+         /*   Main4Activity.this.getRoutingPath();*/
            /* my_direct md = new my_direct();
             Document doc = md.getDocument(my_loc, latLng1,
                     my_direct.MODE_DRIVING);
@@ -261,10 +322,10 @@ public class Main4Activity extends FragmentActivity implements OnMapReadyCallbac
                     }
                 });
     }*/
-
+@Override
  public void onLocationChanged(Location location)
  {
-     double lat = location.getLatitude();
+  /*   double lat = location.getLatitude();
      double lng = location.getLongitude();
      my_loc = new LatLng(lat, lng);
      if(firstRefresh)
@@ -276,30 +337,167 @@ public class Main4Activity extends FragmentActivity implements OnMapReadyCallbac
          to = mMap.addMarker(new MarkerOptions().position(latLng1).title("Destination"));//.icon(BitmapDescriptorFactory.fromResource(R.drawable.location)));
          mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng1));
          mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
-         getRoutingPath();
-     }
+        /* Main4Activity.this.getRoutingPath();*/
+ /*    }
      else
      {
          from.setPosition(my_loc);
-     }
+     }*/
  }
-    private void getRoutingPath()
+
+
+    public void route()
     {
-        try
+        if(my_loc==null || latLng1==null)
         {
-            //Do Routing
-            Routing routing = new Routing.Builder()
-                    .travelMode(Routing.TravelMode.DRIVING)
-                    .withListener((RoutingListener) this)
-                    .waypoints(my_loc,latLng1)
-                    .build();
-            routing.execute();
+
         }
-        catch (Exception e)
+        else
         {
-            Toast.makeText(Main4Activity.this, "Unable to Route", Toast.LENGTH_SHORT).show();
+            progressDialog = ProgressDialog.show(this, "Please wait.",
+                    "Fetching route information.", true);
+            try {
+                Routing routing = new Routing.Builder()
+                        .travelMode(AbstractRouting.TravelMode.DRIVING)
+                        .withListener((RoutingListener) this)
+                        .alternativeRoutes(true)
+                        .waypoints(my_loc, latLng1)
+                        .build();
+                routing.execute();
+
+            }
+            catch (Exception e)
+            {
+
+            }
+
         }
     }
+
+
+
+    public void onRoutingFailure(RouteException e) {
+        // The Routing request failed
+        progressDialog.dismiss();
+        if(e != null) {
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }else {
+            Toast.makeText(this, "Something went wrong, Try again", Toast.LENGTH_SHORT).show();
+        }
+        progressDialog.dismiss();
     }
+
+    @Override
+    public void onRoutingStart() {
+        progressDialog.dismiss();
+    }
+
+    @Override
+    public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex) {
+        progressDialog.dismiss();
+        polylines = new ArrayList<>();
+        if (polylines.size() > 0) {
+            for (Polyline poly : polylines) {
+                poly.remove();
+            }
+        }
+
+
+        //add route(s) to the map.
+        for (int i = 0; i < route.size(); i++) {
+
+            //In case of more than 5 alternative routes
+            int colorIndex = i % COLORS.length;
+
+            PolylineOptions polyOptions = new PolylineOptions();
+            polyOptions.color(getResources().getColor(COLORS[colorIndex]));
+            polyOptions.width(10 + i * 3);
+            polyOptions.addAll(route.get(i).getPoints());
+            Polyline polyline = mMap.addPolyline(polyOptions);
+            polylines.add(polyline);
+            progressDialog.dismiss();
+            Toast.makeText(getApplicationContext(), "Route " + (i + 1) + ": distance - " + route.get(i).getDistanceValue() + ": duration - " + route.get(i).getDurationValue(), Toast.LENGTH_SHORT).show();
+        }
+        progressDialog.dismiss();
+    }
+
+    @Override
+    public void onRoutingCancelled() {
+        progressDialog.dismiss();
+    }
+
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        return false;
+    }
+
+    @Override
+    public void onMarkerDragStart(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDrag(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDragEnd(Marker marker) {
+
+    }
+
+
+    private boolean CheckGooglePlayServices() {
+        GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
+        int result = googleAPI.isGooglePlayServicesAvailable(this);
+        if(result != ConnectionResult.SUCCESS) {
+            if(googleAPI.isUserResolvableError(result)) {
+                googleAPI.getErrorDialog(this, result,
+                        0).show();
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private String getDirectionsUrl()
+    {
+        StringBuilder googleDirectionsUrl = new StringBuilder("https://maps.googleapis.com/maps/api/directions/json?");
+        googleDirectionsUrl.append("origin="+latitude+","+longitude);
+        googleDirectionsUrl.append("&destination="+latitude2+","+longitude2);
+        googleDirectionsUrl.append("&key="+"AIzaSyBrfbhEkLUgWlnXAmSHlBoIW5QZIyv3AiI");
+
+        return googleDirectionsUrl.toString();
+    }
+   /* @SuppressLint("RestrictedApi")
+    @Override
+    public void onConnected(Bundle bundle) {
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(1000);
+        mLocationRequest.setFastestInterval(1000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        }
+    }*/
+
+}
 
 
