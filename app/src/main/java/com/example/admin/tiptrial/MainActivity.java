@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void launchNextScreen() {
         prefManager.setFirstTimeLaunch(false);
-        startActivity(new Intent(MainActivity.this, Main2Activity.class));
+        startActivity(new Intent(MainActivity.this, Main4Activity.class));
         finish();
     }
 
