@@ -317,7 +317,7 @@ public class Main4Activity extends SampleActivityBase implements OnMapReadyCallb
             CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
             mMap.animateCamera(CameraUpdateFactory.zoomOut());
             mMap.animateCamera(cu);
-            route();
+
         }
         route();
     }
@@ -550,6 +550,12 @@ public class Main4Activity extends SampleActivityBase implements OnMapReadyCallb
 
     @Override
     public void onLocationChanged(Location location) {
+      /*  mLocation = gpsTracker.getLocation();
+        latitude = mLocation.getLatitude();
+        longitude = mLocation.getLongitude();
+        my_loc = new LatLng(latitude, longitude);
+
+        route();*/
 
     }
 

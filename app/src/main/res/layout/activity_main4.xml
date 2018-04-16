@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#00000000">
 
 <RelativeLayout
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:id="@+id/search"
-    android:background="#FFFFFF">
+    android:background="@drawable/search"
+    android:padding="10sp"
+    >
 
     <ImageButton
         android:id="@+id/imageButton"
@@ -15,9 +18,9 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:layout_marginEnd="40dp"
-        android:layout_marginRight="40dp"
+        android:layout_below="@+id/destination"
+        android:layout_marginEnd="25dp"
+        android:layout_marginRight="25dp"
         android:background="#00000000"
         android:onClick="onMapSearch"
         android:src="@android:drawable/ic_search_category_default" />
@@ -27,23 +30,48 @@
         android:id="@+id/start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
+        android:layout_alignLeft="@+id/destination"
+        android:layout_alignStart="@+id/destination"
         android:layout_below="@+id/destination"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="13dp"
         android:ems="10"
         android:hint="From"
-        android:inputType="text" />
+        android:inputType="text"
+        android:text="Current Location" />
 
     <AutoCompleteTextView
         android:id="@+id/destination"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
+        android:layout_marginTop="18dp"
+        android:layout_toLeftOf="@+id/imageButton"
+        android:layout_toStartOf="@+id/imageButton"
         android:ems="10"
         android:hint="To" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/start"
+        android:layout_marginBottom="12dp"
+        android:layout_marginEnd="11dp"
+        android:layout_marginRight="11dp"
+        android:layout_toLeftOf="@+id/destination"
+        android:layout_toStartOf="@+id/destination"
+        android:text="To:"
+        android:textSize="20sp"/>
+
+    <TextView
+        android:id="@+id/textView5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/imageButton"
+        android:layout_alignEnd="@+id/textView3"
+        android:layout_alignRight="@+id/textView3"
+        android:text="From:"
+        android:textSize="20sp"/>
 </RelativeLayout>
     <LinearLayout
         android:layout_width="match_parent"
