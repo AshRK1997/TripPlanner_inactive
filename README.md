@@ -32,3 +32,14 @@ Ashwin (done until 16/4/18)
 7. trying to get place details
 8. UI improvements
 
+Ashwin (done until 17/4/18)
+1. Loader done
+2. Current user done
+3. destination field done
+4. Routing done(have to change method as its time consuming)
+5. Displaying distance in toasts.
+6. taking user's from and to locations with suggestions and if user does not write into from field then current location is taken
+7. trying to get place details
+8. UI improvements
+9. Choose the best route based on time from all routes available
+(current location is not being taken have to repair)
