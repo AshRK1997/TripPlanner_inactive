@@ -404,12 +404,15 @@ Boolean searched = false;
 
     @Override
     public void onRoutingStart() {
-        progressDialog.dismiss();
+        
     }
 
     @Override
     public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex) {
         progressDialog.dismiss();
+        int i, store_route = 0;
+        double a = 0;
+
         polylines = new ArrayList<>();
         if (polylines.size() > 0) {
             for (Polyline poly : polylines) {
@@ -419,21 +422,34 @@ Boolean searched = false;
 
 
         //add route(s) to the map.
-        for (int i = 0; i < route.size(); i++) {
-
-            //In case of more than 5 alternative routes
-            int colorIndex = i % COLORS.length;
-
-            PolylineOptions polyOptions = new PolylineOptions();
-            polyOptions.color(getResources().getColor(COLORS[colorIndex]));
-            polyOptions.width(10 + i * 3);
-            polyOptions.addAll(route.get(i).getPoints());
-            Polyline polyline = mMap.addPolyline(polyOptions);
-            polylines.add(polyline);
-            progressDialog.dismiss();
-            Toast.makeText(getApplicationContext(), "Route " + (i + 1) + ": distance - " + route.get(i).getDistanceValue() + ": duration - " + route.get(i).getDurationValue(), Toast.LENGTH_SHORT).show();
+        for (i = 0; i < route.size(); i++) {
+            if (i != 0) {
+                if (route.get(i).getDurationValue() <= a) {
+                    a = route.get(i).getDurationValue();
+                    store_route = i;
+                }
+            } else {
+                a = route.get(i).getDurationValue();
+                store_route = i;
+            }
         }
-        progressDialog.dismiss();
+        for (i = 0; i < route.size(); i++) {
+            if (i == store_route) {
+                //In case of more than 5 alternative routes
+                int colorIndex = i % COLORS.length;
+
+                PolylineOptions polyOptions = new PolylineOptions();
+                polyOptions.color(getResources().getColor(COLORS[colorIndex]));
+                polyOptions.width(10 + i * 3);
+                polyOptions.addAll(route.get(i).getPoints());
+                Polyline polyline = mMap.addPolyline(polyOptions);
+                polylines.add(polyline);
+                Toast.makeText(getApplicationContext(), "Route " + (i + 1) + ": distance - " + route.get(i).getDistanceValue() + ": duration - " + route.get(i).getDurationValue(), Toast.LENGTH_SHORT).show();
+
+            }
+            Toast.makeText(getApplicationContext(), "Route " + (i + 1) + ": distance - " + route.get(i).getDistanceValue() + ": duration - " + route.get(i).getDurationValue(), Toast.LENGTH_SHORT).show();
+
+        }
     }
 
     @Override
