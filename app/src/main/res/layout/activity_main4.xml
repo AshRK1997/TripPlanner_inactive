@@ -36,8 +36,7 @@
         android:layout_marginTop="13dp"
         android:ems="10"
         android:hint="From"
-        android:inputType="text"
-        android:text="Current Location" />
+        android:inputType="text" />
 
     <AutoCompleteTextView
         android:id="@+id/destination"
@@ -48,7 +47,8 @@
         android:layout_toLeftOf="@+id/imageButton"
         android:layout_toStartOf="@+id/imageButton"
         android:ems="10"
-        android:hint="To" />
+        android:hint="To"
+        android:text="Current Location" />
 
     <TextView
         android:id="@+id/textView3"
@@ -60,8 +60,8 @@
         android:layout_marginRight="11dp"
         android:layout_toLeftOf="@+id/destination"
         android:layout_toStartOf="@+id/destination"
-        android:text="To:"
-        android:textSize="20sp"/>
+        android:text="From:"
+        android:textSize="20sp" />
 
     <TextView
         android:id="@+id/textView5"
@@ -70,8 +70,8 @@
         android:layout_alignBottom="@+id/imageButton"
         android:layout_alignEnd="@+id/textView3"
         android:layout_alignRight="@+id/textView3"
-        android:text="From:"
-        android:textSize="20sp"/>
+        android:text="To:"
+        android:textSize="20sp" />
 </RelativeLayout>
     <LinearLayout
         android:layout_width="match_parent"

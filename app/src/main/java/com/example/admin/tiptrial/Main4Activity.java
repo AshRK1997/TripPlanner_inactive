@@ -67,7 +67,7 @@ public class Main4Activity extends SampleActivityBase implements OnMapReadyCallb
     double latitude, longitude;
     double latitude2, longitude2;
     LocationRequest mLocationRequest;
-
+Boolean searched = false;
 
     private AutoCompleteTextView start, destination;
 
@@ -319,6 +319,7 @@ public class Main4Activity extends SampleActivityBase implements OnMapReadyCallb
             mMap.animateCamera(cu);
 
         }
+        searched=true;
         route();
     }
  /*   public void getDirection(final LatLng a, final LatLng b) {
@@ -550,14 +551,15 @@ public class Main4Activity extends SampleActivityBase implements OnMapReadyCallb
 
     @Override
     public void onLocationChanged(Location location) {
-      /*  mLocation = gpsTracker.getLocation();
+        if(searched){
+        mLocation = gpsTracker.getLocation();
         latitude = mLocation.getLatitude();
         longitude = mLocation.getLongitude();
         my_loc = new LatLng(latitude, longitude);
 
-        route();*/
+        route();
 
-    }
+    }}
 
     public void onMapSearch(View view) {
 
