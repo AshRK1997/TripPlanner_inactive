@@ -18,9 +18,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_below="@+id/destination"
-        android:layout_marginEnd="25dp"
-        android:layout_marginRight="25dp"
+        android:layout_alignTop="@+id/textView3"
+        android:layout_marginTop="24dp"
         android:background="#00000000"
         android:onClick="onMapSearch"
         android:src="@android:drawable/ic_search_category_default" />
@@ -35,7 +34,8 @@
         android:layout_below="@+id/destination"
         android:layout_marginTop="13dp"
         android:ems="10"
-        android:hint="From"
+        android:hint="To"
+
         android:inputType="text" />
 
     <AutoCompleteTextView
@@ -43,23 +43,26 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
+        android:layout_marginLeft="12dp"
+        android:layout_marginStart="12dp"
         android:layout_marginTop="18dp"
-        android:layout_toLeftOf="@+id/imageButton"
-        android:layout_toStartOf="@+id/imageButton"
+        android:layout_toEndOf="@+id/textView3"
+        android:layout_toRightOf="@+id/textView3"
+        android:Text="Current Location"
         android:ems="10"
-        android:hint="To"
+        android:hint="From"
         android:text="Current Location" />
 
     <TextView
         android:id="@+id/textView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/start"
-        android:layout_marginBottom="12dp"
-        android:layout_marginEnd="11dp"
-        android:layout_marginRight="11dp"
-        android:layout_toLeftOf="@+id/destination"
-        android:layout_toStartOf="@+id/destination"
+        android:layout_alignBaseline="@+id/destination"
+        android:layout_alignBottom="@+id/destination"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="13dp"
+        android:layout_marginStart="13dp"
         android:text="From:"
         android:textSize="20sp" />
 

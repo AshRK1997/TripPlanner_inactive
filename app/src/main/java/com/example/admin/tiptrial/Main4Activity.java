@@ -1,7 +1,6 @@
 package com.example.admin.tiptrial;
 
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -35,7 +34,6 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -59,10 +57,10 @@ public class Main4Activity extends SampleActivityBase implements OnMapReadyCallb
     /*** direct api = AIzaSyBBnJigWiu0TUp0IREUsnVoDw3HlliShzE***/
     // Google Map
 
-    private ProgressDialog progressDialog;
+    final static int REQUEST_LOCATION = 199;
     protected GeoDataClient mGeoDataClient;
-
-    private GPSTracker gpsTracker;
+    LocationRequest locationRequest;
+GPSTracker gps;
     private Location mLocation;
     double latitude, longitude;
     double latitude2, longitude2;
@@ -77,13 +75,13 @@ Boolean searched = false;
 
 
 
-    private boolean firstRefresh = true;
+
     private GoogleMap mMap;
     boolean turned = true;
     private PlaceAutoCompleteAdapter mAdapter;
     private List<Polyline> polylines;
     private static final int[] COLORS = new int[]{R.color.orange, R.color.colorPrimary, R.color.colorAccent, R.color.colorPrimaryDark, R.color.primary_dark_material_light};
-    private static final LatLngBounds BOUNDS_GREATER_SYDNEY = new LatLngBounds(
+    private static final LatLngBounds BOUNDS_NEAR = new LatLngBounds(
             new LatLng(-34.041458, 150.790100), new LatLng(-33.682247, 151.383362));
 
 
@@ -96,7 +94,7 @@ Boolean searched = false;
         mGeoDataClient = Places.getGeoDataClient(this, null);
         start.setOnItemClickListener(mAutocompleteClickListener);
         destination.setOnItemClickListener(mAutocompleteClickListener1);
-        mAdapter = new PlaceAutoCompleteAdapter(this, mGeoDataClient, BOUNDS_GREATER_SYDNEY, null);
+        mAdapter = new PlaceAutoCompleteAdapter(this, mGeoDataClient, BOUNDS_NEAR, null);
         start.setAdapter(mAdapter);
         destination.setAdapter(mAdapter);
         if (!CheckGooglePlayServices()) {
@@ -105,13 +103,6 @@ Boolean searched = false;
 
 
         }
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Places.GEO_DATA_API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
-        MapsInitializer.initialize(this);
-        mGoogleApiClient.connect();
 
         polylines = new ArrayList<>();
         try {
@@ -123,6 +114,7 @@ Boolean searched = false;
         }
 
     }
+
 
 
     public void sendRequest() {
@@ -139,10 +131,101 @@ Boolean searched = false;
 
         MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map1);
         mapFragment.getMapAsync(Main4Activity.this);
+        gps = new GPSTracker(Main4Activity.this);
+        latitude = gps.getLatitude();
+        longitude = gps.getLongitude();
+        LatLngBounds BOUNDS_NEAR = new LatLngBounds(
+                new LatLng(latitude-2,longitude-2), new LatLng(latitude+2, longitude+2));
+        start.setOnItemClickListener(mAutocompleteClickListener);
+        destination.setOnItemClickListener(mAutocompleteClickListener1);
+        mAdapter = new PlaceAutoCompleteAdapter(this, mGeoDataClient, BOUNDS_NEAR, null);
+        start.setAdapter(mAdapter);
+        destination.setAdapter(mAdapter);
+       /* if (hasGPSDevice(Main4Activity.this)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                int permissionCheck = ContextCompat.checkSelfPermission(Main4Activity.this,
+                        Manifest.permission.CAMERA);
+                mGoogleApiClient = new GoogleApiClient.Builder(Main4Activity.this)
+                        .addApi(LocationServices.API)
+                        .addConnectionCallbacks(this)
+                        .addOnConnectionFailedListener(this).build();
+                mGoogleApiClient.connect();
+
+                LocationRequest locationRequest = LocationRequest.create();
+                locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+                locationRequest.setInterval(30 * 1000);
+                locationRequest.setFastestInterval(5 * 1000);
+                LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                        .addLocationRequest(locationRequest);
+
+                //**************************
+                builder.setAlwaysShow(true); //this is the key ingredient
+                //**************************
+
+                PendingResult<LocationSettingsResult> result =
+                        LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
+                result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+                    @Override
+                    public void onResult(LocationSettingsResult result) {
+                        final Status status = result.getStatus();
+                        final LocationSettingsStates state = result.getLocationSettingsStates();
+                        switch (status.getStatusCode()) {
+                            case LocationSettingsStatusCodes.SUCCESS:
+                                // All location settings are satisfied. The client can initialize location
+                                // requests here.
+                                break;
+                            case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                                // Location settings are not satisfied. But could be fixed by showing the user
+                                // a dialog.
+                                try {
+                                    // Show the dialog by calling startResolutionForResult(),
+                                    // and check the result in onActivityResult().
+                                    status.startResolutionForResult(
+                                            Main4Activity.this, 1000);
+                                } catch (IntentSender.SendIntentException e) {
+                                    // Ignore the error.
+                                }
+                                break;
+                            case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                                // Location settings are not satisfied. However, we have no way to fix the
+                                // settings so we won't show the dialog.
+                                break;
+                        }
+                    }
+                });
+
+                if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                    Log.e("permission", "granted");
+                    locationEnabled_or_Not();
+
+                } else {
+                    ActivityCompat.requestPermissions(Main4Activity.this,
+                            new String[]{Manifest.permission.CAMERA,
+                                    Manifest.permission.ACCESS_NETWORK_STATE,
+                                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION,}, 1);
+                    locationEnabled_or_Not();
+                }
+            }
+        }
+        else {
+            Toast.makeText(getApplicationContext(), "We cannpt function as you do not have GPS ",
+                    Toast.LENGTH_SHORT).show();
+        }
+
+
+
+
+
+        latitude = gps.getLatitude();
+        longitude = gps.getLongitude();
+
 
         // check if map is created successfully or not
 
-
+/*
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
 
@@ -152,23 +235,29 @@ Boolean searched = false;
 
             latitude = mLocation.getLatitude();
             longitude = mLocation.getLongitude();
+
         } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
 
 
             gpsTracker = new GPSTracker(getApplicationContext());
-            mLocation = gpsTracker.getLocation();
 
-            latitude = mLocation.getLatitude();
-            longitude = mLocation.getLongitude();
+
+            latitude = gpsTracker.getLatitude();
+            longitude = gpsTracker.getLongitude();
+
         }
+        else{
+            Toast.makeText(this, "Not able to get Location " , Toast.LENGTH_SHORT).show();
+        }*/
     }
 
 
     @Override
     protected void onResume() {
         super.onResume();
-        initilizeMap();
+
+       initilizeMap();
     }
 
     @Override
@@ -181,9 +270,6 @@ Boolean searched = false;
                 buildGoogleApiClient();
 
             }
-        } else {
-            buildGoogleApiClient();
-
         }
 
         googleMap.getUiSettings().setZoomControlsEnabled(true);
@@ -258,7 +344,7 @@ Boolean searched = false;
     }
 */
     public void search() {
-        Toast.makeText(getApplicationContext(), "Clicked ",
+       Toast.makeText(getApplicationContext(), "Clicked ",
                 Toast.LENGTH_SHORT).show();
         String location_frm = start.getText().toString();
         String location_to = destination.getText().toString();
@@ -282,6 +368,8 @@ Boolean searched = false;
             } catch (Exception e) {
                 Toast.makeText(getApplicationContext(), "Enter the from address ",
                         Toast.LENGTH_SHORT).show();
+                latitude = gps.getLatitude();
+                longitude = gps.getLongitude();
             }
             if (location_to != null || !location_to.equals("")) {
                 Geocoder geocoder1 = new Geocoder(this);
@@ -319,35 +407,13 @@ Boolean searched = false;
             mMap.animateCamera(cu);
 
         }
-        searched=true;
-        route();
+        /*searched=true;
+        route();*/
     }
- /*   public void getDirection(final LatLng a, final LatLng b) {
-
-        GoogleDirection.withServerKey("AIzaSyAGRYhhtVz3LmzcmfB2KAKlPeWhANcT6LA")
-                .from(a)
-                .to(b)
-                .avoid(AvoidType.FERRIES)
-                .transportMode(TransportMode.DRIVING)
-                .execute(new DirectionCallback() {
-                    @Override
-                    public void onDirectionSuccess(Direction direction, String rawBody) {
-                        if (direction.isOK()) {
-                            // Do something
-                        } else {
-                            // Do something
-                        }
-                    }
-
-                    @Override
-                    public void onDirectionFailure(Throwable t) {
-                        getDirection(a, b);
-                    }
-                });
-    }
+/*
 @Override
  public void onLocationChanged(Location location)
- {
+ {*/
   /*   double lat = location.getLatitude();
      double lng = location.getLongitude();
      my_loc = new LatLng(lat, lng);
@@ -372,8 +438,8 @@ Boolean searched = false;
         if (my_loc == null || latLng1 == null) {
 
         } else {
-            progressDialog = ProgressDialog.show(this, "Please wait.",
-                    "Fetching route information.", true);
+            /*progressDialog = ProgressDialog.show(this, "Please wait.",
+                    "Fetching route information.", true);*/
             try {
                 Routing routing = new Routing.Builder()
                         .travelMode(AbstractRouting.TravelMode.DRIVING)
@@ -393,23 +459,22 @@ Boolean searched = false;
 
     public void onRoutingFailure(RouteException e) {
         // The Routing request failed
-        progressDialog.dismiss();
+
         if (e != null) {
             Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
         } else {
             Toast.makeText(this, "Something went wrong, Try again", Toast.LENGTH_SHORT).show();
         }
-        progressDialog.dismiss();
+
     }
 
     @Override
     public void onRoutingStart() {
-        
+
     }
 
     @Override
     public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex) {
-        progressDialog.dismiss();
         int i, store_route = 0;
         double a = 0;
 
@@ -451,10 +516,9 @@ Boolean searched = false;
 
         }
     }
-
     @Override
     public void onRoutingCancelled() {
-        progressDialog.dismiss();
+
     }
 
 
@@ -567,18 +631,115 @@ Boolean searched = false;
 
     @Override
     public void onLocationChanged(Location location) {
-        if(searched){
+    /*    if(searched){
         mLocation = gpsTracker.getLocation();
         latitude = mLocation.getLatitude();
         longitude = mLocation.getLongitude();
         my_loc = new LatLng(latitude, longitude);
-
+            Toast.makeText(this, "Loc changed " , Toast.LENGTH_SHORT).show();
         route();
 
-    }}
+    }*/}
 
     public void onMapSearch(View view) {
 
         search();
     }
+
+   /* public boolean hasGPSDevice(Context context) {
+        Log.e("keshav", "hasGPS Step 1 Pass...........");
+        final LocationManager mgr = (LocationManager) context
+                .getSystemService(Context.LOCATION_SERVICE);
+        if (mgr == null){
+            Log.e("keshav", "no gps...........");
+            return false;}
+        final List<String> providers = mgr.getAllProviders();
+        if (providers == null){
+            Log.e("keshav", "no gps...........");
+            return false;}
+        return providers.contains(LocationManager.GPS_PROVIDER);
+    }
+
+    // TODO When Location not enabled show popup
+    // TODO When Location already Enabled CAll GPS Tracker
+    private void locationEnabled_or_Not() {
+        Log.e("keshav", "locationEnabled_or_Not Step 2 Pass...........");
+        final LocationManager manager = (LocationManager) Main4Activity.this.getSystemService(Context.LOCATION_SERVICE);
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER) && hasGPSDevice(Main4Activity.this)) {
+            Log.e("keshav", "Gps not enabled");
+            callLocationDialog();
+        } else {
+            Log.e("keshav", "Gps already enabled");
+            if (gps.canGetLocation()) {
+
+                latitude = gps.getLatitude();
+                longitude = gps.getLongitude();
+
+            } else {
+
+                callLocationDialog();
+            }          // TODO When Gps already enabled call direct GPS Tracker
+        }
+    }
+
+    //TODO Step 3 when hasGPSDevice return true
+
+    private void callLocationDialog() {
+
+        Log.e("keshav", "callLocationDialog Step 3 Popup called ...........");
+
+        mGoogleApiClient = new GoogleApiClient.Builder(Main4Activity.this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this).build();
+        mGoogleApiClient.connect();
+
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(30 * 1000);
+        locationRequest.setFastestInterval(5 * 1000);
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+
+        //**************************
+        builder.setAlwaysShow(true); //this is the key ingredient
+        //**************************
+
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                final LocationSettingsStates state = result.getLocationSettingsStates();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        // All location settings are satisfied. The client can initialize location
+                        // requests here.
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        // Location settings are not satisfied. But could be fixed by showing the user
+                        // a dialog.
+                        try {
+                            // Show the dialog by calling startResolutionForResult(),
+                            // and check the result in onActivityResult().
+                            status.startResolutionForResult(
+                                    Main4Activity.this, 1000);
+                        } catch (IntentSender.SendIntentException e) {
+                            // Ignore the error.
+                        }
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        // Location settings are not satisfied. However, we have no way to fix the
+                        // settings so we won't show the dialog.
+                        break;
+                }
+            }
+        });
+
+    }
+
+    //TODO Step 4 when location on fetch GPS Tracker Through Latitude Longitude
+
+*/
 }

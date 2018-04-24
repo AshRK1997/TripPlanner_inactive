@@ -82,6 +82,10 @@ public class PlaceAutoCompleteAdapter
      */
     @Override
     public int getCount() {
+        if (mResultList == null){
+            return 0;
+        }
+        else
         return mResultList.size();
     }
 

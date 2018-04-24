@@ -53,10 +53,6 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
 
 
-                isConnectionAvailable();
-                isGpsAvailable();
-                if(isGpsAvailable() & isConnectionAvailable())
-                {
                     if (!prefManager.isFirstTimeLaunch()) {
                         launchHomeScreen();
                         finish();
@@ -65,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
                         launchNextScreen();
                     }
-                }
+
 
             }
         }, 1970);
