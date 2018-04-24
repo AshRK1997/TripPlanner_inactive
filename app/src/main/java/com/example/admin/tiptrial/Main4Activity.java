@@ -407,8 +407,8 @@ Boolean searched = false;
             mMap.animateCamera(cu);
 
         }
-        /*searched=true;
-        route();*/
+        searched=true;
+        route();
     }
 /*
 @Override
