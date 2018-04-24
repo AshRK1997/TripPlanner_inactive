@@ -1,10 +1,13 @@
 package com.example.admin.tiptrial;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -23,9 +26,16 @@ import com.directions.route.RoutingListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.places.AutocompletePrediction;
 import com.google.android.gms.location.places.GeoDataClient;
 import com.google.android.gms.location.places.PlaceBufferResponse;
@@ -132,8 +142,71 @@ Boolean searched = false;
         MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map1);
         mapFragment.getMapAsync(Main4Activity.this);
         gps = new GPSTracker(Main4Activity.this);
-        latitude = gps.getLatitude();
-        longitude = gps.getLongitude();
+            Log.e("permission", "granted");
+            final LocationManager manager = (LocationManager) Main4Activity.this.getSystemService(Context.LOCATION_SERVICE);
+            if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                Log.e("keshav", "Gps not enabled");
+                mGoogleApiClient = new GoogleApiClient.Builder(Main4Activity.this)
+                        .addApi(LocationServices.API)
+                        .addConnectionCallbacks(this)
+                        .addOnConnectionFailedListener(this).build();
+                mGoogleApiClient.connect();
+
+                LocationRequest locationRequest = LocationRequest.create();
+                locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+                LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                        .addLocationRequest(locationRequest);
+
+                //**************************
+                builder.setAlwaysShow(true); //this is the key ingredient
+                //**************************
+
+                PendingResult<LocationSettingsResult> result =
+                        LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
+                result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+                    @Override
+                    public void onResult(LocationSettingsResult result) {
+                        final Status status = result.getStatus();
+                        final LocationSettingsStates state = result.getLocationSettingsStates();
+                        switch (status.getStatusCode()) {
+                            case LocationSettingsStatusCodes.SUCCESS:
+                                // All location settings are satisfied. The client can initialize location
+                                // requests here.
+                                break;
+                            case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                                // Location settings are not satisfied. But could be fixed by showing the user
+                                // a dialog.
+                                try {
+                                    // Show the dialog by calling startResolutionForResult(),
+                                    // and check the result in onActivityResult().
+                                    status.startResolutionForResult(
+                                            Main4Activity.this, 1000);
+                                } catch (IntentSender.SendIntentException e) {
+                                    // Ignore the error.
+                                }
+                                break;
+                            case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                                // Location settings are not satisfied. However, we have no way to fix the
+                                // settings so we won't show the dialog.
+                                break;
+                        }
+                    }
+                });
+                latitude = gps.getLatitude();
+                longitude = gps.getLongitude();
+
+            } else {
+                Log.e("keshav", "Gps already enabled");
+                latitude = gps.getLatitude();
+                longitude = gps.getLongitude();
+            }
+if(latitude == 0 && longitude == 0){
+    latitude = gps.getLatitude();
+    longitude = gps.getLongitude();
+}
+
+
+
         LatLngBounds BOUNDS_NEAR = new LatLngBounds(
                 new LatLng(latitude-2,longitude-2), new LatLng(latitude+2, longitude+2));
         start.setOnItemClickListener(mAutocompleteClickListener);
@@ -644,6 +717,11 @@ Boolean searched = false;
     public void onMapSearch(View view) {
 
         search();
+    }
+
+    public void mylocation(View view) {
+        latitude = gps.getLatitude();
+        longitude = gps.getLongitude();
     }
 
    /* public boolean hasGPSDevice(Context context) {

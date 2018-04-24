@@ -1,5 +1,6 @@
 package com.example.admin.tiptrial;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.animation.Animation;
@@ -25,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private PreferenceManager prefManager;
     ImageView i1,i2;
     LocationManager locationManager;
+    int permissionCheck[];
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,17 +55,28 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
 
+            if(hasPermission()) {
+                if (!prefManager.isFirstTimeLaunch()) {
+                    launchHomeScreen();
+                    finish();
+                } else {
 
+                    launchNextScreen();
+                }
+
+            }
+            else{
+                checkpermission();
+                if(hasPermission()){
                     if (!prefManager.isFirstTimeLaunch()) {
                         launchHomeScreen();
                         finish();
-                    }
-                    else{
+                    } else {
 
                         launchNextScreen();
                     }
-
-
+                }
+            }
             }
         }, 1970);
 
@@ -183,6 +197,38 @@ public class MainActivity extends AppCompatActivity {
         }
         return gpsCon;
     }
+public void checkpermission(){
+
+        ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{Manifest.permission.CAMERA,
+                        Manifest.permission.ACCESS_NETWORK_STATE,
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,}, 1);
+
+    }
+
+public Boolean hasPermission(){
+    Boolean permission = true;
+    permissionCheck = new int[]{ ContextCompat.checkSelfPermission(MainActivity.this,
+            Manifest.permission.ACCESS_NETWORK_STATE),ContextCompat.checkSelfPermission(MainActivity.this,
+            Manifest.permission.READ_EXTERNAL_STORAGE),ContextCompat.checkSelfPermission(MainActivity.this,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE),ContextCompat.checkSelfPermission(MainActivity.this,
+            Manifest.permission.ACCESS_COARSE_LOCATION),ContextCompat.checkSelfPermission(MainActivity.this,
+            Manifest.permission.ACCESS_FINE_LOCATION),ContextCompat.checkSelfPermission(MainActivity.this,
+            Manifest.permission.CAMERA)};
+    for(int i=0;i<5;i++) {
+
+        if (permissionCheck[i] == PackageManager.PERMISSION_GRANTED) {
 
 
+        } else {
+permission = false;
+        }
+    }
+    return permission;
+    }
 }
+
+
